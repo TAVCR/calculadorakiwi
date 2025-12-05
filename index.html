@@ -146,7 +146,20 @@
                     <!-- Dato numérico: Primary -->
                     <span class="text-orange-500 font-primary font-black text-lg" id="margin-display">40%</span>
                 </label>
-                <input type="range" id="margin-slider" min="25" max="100" step="2" value="40" class="w-full h-4 bg-gray-700 rounded-full appearance-none cursor-pointer range-slider relative z-20" />
+                
+                <!-- Contenedor relativo para slider y alerta -->
+                <div class="relative">
+                    <!-- ALERTA ANIMADA "TÓCAME" (Desaparece al interactuar) -->
+                    <div id="slider-hint" class="absolute top-[-30px] left-1/2 transform -translate-x-1/2 z-30 pointer-events-none animate-bounce">
+                        <div class="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg border border-blue-400 whitespace-nowrap">
+                            👆 ¡Ajústame!
+                        </div>
+                        <!-- Triángulo del tooltip -->
+                        <div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-blue-600 mx-auto"></div>
+                    </div>
+
+                    <input type="range" id="margin-slider" min="25" max="100" step="2" value="40" class="w-full h-4 bg-gray-700 rounded-full appearance-none cursor-pointer range-slider relative z-20" />
+                </div>
                 
                 <div class="relative w-full h-6 mt-1 text-xs font-semibold tracking-tight select-none">
                     <span class="absolute left-[20%] -translate-x-1/2 top-0 text-orange-400 whitespace-nowrap z-10 bg-white/90 dark:bg-black/90 px-1 rounded shadow-sm border border-orange-500/30">Seguro (40%)</span>
@@ -228,7 +241,7 @@
     <script>
         // Variables de Estado
         let usdPrice = 0;
-        let margin = 40; 
+        let margin = 40; // DEFAULT SEGURO
         let exchangeRate = 505; 
         let isFloorApplied = false;
         let isDarkMode = true;
@@ -242,6 +255,7 @@
         const costInColonesEl = document.getElementById('cost-in-colones'); 
         const marginSlider = document.getElementById('margin-slider');
         const marginDisplay = document.getElementById('margin-display');
+        const sliderHint = document.getElementById('slider-hint'); // NUEVO HINT
         const exchangeInput = document.getElementById('exchange-rate');
         const finalPriceEl = document.getElementById('final-price');
         const profitAmountEl = document.getElementById('profit-amount');
@@ -261,7 +275,9 @@
         // Inicialización
         document.addEventListener('DOMContentLoaded', () => {
             fetchExchangeRate();
-            updateCalculation();
+            
+            // RESET FORZOSO AL INICIO (Limpia caché de navegador)
+            resetAppLogic(); 
             
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
@@ -283,7 +299,12 @@
         // Event Listeners
         usdInput.addEventListener('input', (e) => {
             usdPrice = e.target.value;
-            if (usdPrice === '') resetMarginSecurity();
+            // Si el campo se limpia manualmente, reseteamos seguridad
+            if (usdPrice === '') {
+                resetMarginSecurity();
+                // Opcional: mostrar hint de nuevo si empieza de cero
+                sliderHint.classList.remove('opacity-0', 'pointer-events-none'); 
+            }
             updateCalculation();
         });
 
@@ -296,6 +317,9 @@
 
         marginSlider.addEventListener('input', (e) => {
             if (document.activeElement === usdInput) usdInput.blur();
+
+            // OCULTAR ALERTA VISUAL al primer toque
+            sliderHint.classList.add('opacity-0', 'pointer-events-none', 'transition-opacity', 'duration-500');
 
             let newValue = parseInt(e.target.value);
             if (newValue < MIN_SAFE_MARGIN && !marginUnlocked) {
@@ -323,10 +347,7 @@
         
         // LÓGICA DEL BOTÓN CERRAR / RESET
         btnClose.addEventListener('click', () => {
-            usdInput.value = '';
-            usdPrice = 0;
-            resetMarginSecurity();
-            updateCalculation();
+            resetAppLogic(); // Limpieza interna
             
             try {
                 window.close(); 
@@ -356,9 +377,27 @@
             }, 3000);
         });
 
+        // FUNCION CENTRALIZADA DE RESET
+        function resetAppLogic() {
+            // 1. Inputs a cero
+            usdInput.value = '';
+            usdPrice = 0;
+            
+            // 2. Margen al 40% (Seguro)
+            resetMarginSecurity();
+            
+            // 3. Mostrar Hint de nuevo
+            if(sliderHint) {
+                sliderHint.classList.remove('opacity-0', 'pointer-events-none', 'transition-opacity', 'duration-500');
+            }
+            
+            // 4. Actualizar toda la UI
+            updateCalculation();
+        }
+
         function resetMarginSecurity() {
             margin = MIN_SAFE_MARGIN;
-            marginSlider.value = MIN_SAFE_MARGIN;
+            marginSlider.value = MIN_SAFE_MARGIN; // Fisicamente mover el slider
             marginUnlocked = false; 
             updateMarginDisplay();
         }
