@@ -159,6 +159,15 @@
                         0
                     </span>
                 </div>
+                
+                <!-- SECCIÓN DE GANANCIA -->
+                <div class="mt-4 pt-4 border-t border-gray-700/50 relative z-10">
+                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Tu margen de ganancia será de:</p>
+                    <div class="flex justify-center items-center gap-1 text-lime-400">
+                        <span class="text-sm font-bold opacity-80">₡</span>
+                        <span id="profit-amount" class="text-2xl font-black tracking-tight">0</span>
+                    </div>
+                </div>
             </div>
 
             <!-- ALERTA LOGÍSTICA -->
@@ -206,6 +215,7 @@
         const marginDisplay = document.getElementById('margin-display');
         const exchangeInput = document.getElementById('exchange-rate');
         const finalPriceEl = document.getElementById('final-price');
+        const profitAmountEl = document.getElementById('profit-amount');
         const rateSourceEl = document.getElementById('rate-source');
         const floorWarningEl = document.getElementById('floor-warning');
         const exchangeBox = document.getElementById('exchange-box');
@@ -264,13 +274,24 @@
         function updateCalculation() {
             if (!usdPrice) {
                 finalPriceEl.textContent = '0';
+                profitAmountEl.textContent = '0';
                 return;
             }
+            
+            // 1. Calcular Costo Real en Colones (Precio USA * Tipo de Cambio)
             const costInColones = parseFloat(usdPrice) * exchangeRate;
-            const price = costInColones * (1 + (margin / 100));
-            // Redondeo a 500
-            const roundedPrice = Math.ceil(price / 500) * 500;
-            finalPriceEl.textContent = roundedPrice.toLocaleString('es-CR');
+            
+            // 2. Calcular Precio con Margen
+            const priceWithMargin = costInColones * (1 + (margin / 100));
+            
+            // 3. Redondeo a 500 (Precio Final de Venta)
+            const roundedFinalPrice = Math.ceil(priceWithMargin / 500) * 500;
+            
+            // 4. Calcular Ganancia Real (Precio Venta - Costo Real)
+            const profit = roundedFinalPrice - costInColones;
+
+            finalPriceEl.textContent = roundedFinalPrice.toLocaleString('es-CR');
+            profitAmountEl.textContent = profit.toLocaleString('es-CR');
         }
 
         // Lógica de API Hacienda ACTUALIZADA (Piso 505)
