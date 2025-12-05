@@ -301,22 +301,29 @@
             resetMarginSecurity();
             updateCalculation();
             
-            // 2. Ejecutar regreso nativo
-            if (window.history.length > 1) {
-                window.history.back(); // Vuelve a WhatsApp o app anterior
-            } else {
-                try {
-                    window.close(); // Intento secundario
-                } catch(e) {}
-                // Si no se puede cerrar (ej. nueva pestaña directa), mostramos feedback
-                const originalText = btnClose.innerHTML;
-                btnClose.innerHTML = '<i data-lucide="check" width="24"></i> ¡Calculadora Limpia!';
-                lucide.createIcons();
-                setTimeout(() => {
-                    btnClose.innerHTML = originalText;
-                    lucide.createIcons();
-                }, 1500);
+            // 2. Intentar cerrar ventana agresivamente
+            try {
+                window.close(); // Intento directo
+                window.open('','_self').close(); // Hack para cerrar pestañas no script
+            } catch(e) {
+                console.log("Cierre automático bloqueado por navegador");
             }
+
+            // 3. Feedback visual CLARO de que se limpió todo (Por si no se cierra)
+            const originalText = btnClose.innerHTML;
+            const originalBg = btnClose.className;
+            
+            // Cambiar a VERDE y mostrar mensaje de éxito
+            btnClose.className = "w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl uppercase tracking-widest flex items-center justify-center gap-3 transition-all shadow-lg";
+            btnClose.innerHTML = '<i data-lucide="check-circle" width="24"></i> ¡Datos borrados! Cierra la pestaña';
+            lucide.createIcons();
+            
+            // Volver al estado normal después de unos segundos
+            setTimeout(() => {
+                btnClose.innerHTML = originalText;
+                btnClose.className = originalBg;
+                lucide.createIcons();
+            }, 3000);
         });
 
         function resetMarginSecurity() {
