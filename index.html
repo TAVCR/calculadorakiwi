@@ -113,30 +113,32 @@
                 </div>
             </div>
 
-            <!-- Sección 3: Tipo de Cambio -->
-            <!-- Este contenedor cambiará de color dinámicamente con JS -->
+            <!-- Sección 3: Tipo de Cambio (BLOQUEADO/AUTOMÁTICO) -->
             <div id="exchange-box" class="p-3 rounded-xl flex items-center justify-between border transition-colors duration-300">
                 <div class="flex flex-col">
                     <div class="flex items-center gap-2 font-bold text-sm text-gray-700 dark:text-gray-300">
                         <span id="rate-icon-container">
-                            <i data-lucide="landmark" width="16" id="icon-bank"></i>
+                            <!-- Icono Candado para indicar que está fijo/seguro -->
+                            <i data-lucide="lock" width="16" id="icon-lock" class="text-gray-400 dark:text-gray-500"></i>
                             <i data-lucide="shield-check" width="16" id="icon-shield" class="hidden text-orange-500"></i>
                         </span>
-                        <span id="rate-label">T.C. Venta</span> <span id="rate-source" class="text-xs opacity-70">(Cargando...)</span>
+                        <span id="rate-label">T.C. Automático</span> <span id="rate-source" class="text-xs opacity-70">(Cargando...)</span>
                     </div>
                     <span id="floor-warning" class="text-[10px] font-bold text-orange-500 flex items-center gap-1 mt-1 hidden">
                         <i data-lucide="shield-check" width="10"></i>
-                        Piso de seguridad aplicado
+                        Piso mín. 505 aplicado
                     </span>
                 </div>
                 
-                <div class="flex items-center gap-1">
+                <div class="flex items-center gap-1 opacity-80" title="Precio calculado automáticamente">
                     <span class="font-bold text-gray-500 dark:text-gray-400">₡</span>
+                    <!-- Input deshabilitado (Disabled) -->
                     <input 
                         type="number" 
                         id="exchange-rate"
-                        value="500"
-                        class="w-20 border rounded-md px-2 py-1 text-right font-bold text-lg focus:outline-none focus:ring-2 bg-transparent"
+                        value="505"
+                        disabled
+                        class="w-20 border-none bg-transparent rounded-md px-2 py-1 text-right font-bold text-lg focus:outline-none cursor-not-allowed text-gray-600 dark:text-gray-300"
                     />
                 </div>
             </div>
@@ -187,10 +189,10 @@
         // Variables de Estado
         let usdPrice = 0;
         let margin = 30;
-        let exchangeRate = 500;
+        let exchangeRate = 505; // Piso inicial actualizado a 505
         let isFloorApplied = false;
         let isDarkMode = true;
-        let manualRateEdit = false;
+        // Eliminamos manualRateEdit ya que el campo está deshabilitado
 
         // Elementos del DOM
         const usdInput = document.getElementById('usd-price');
@@ -201,7 +203,7 @@
         const rateSourceEl = document.getElementById('rate-source');
         const floorWarningEl = document.getElementById('floor-warning');
         const exchangeBox = document.getElementById('exchange-box');
-        const iconBank = document.getElementById('icon-bank');
+        const iconLock = document.getElementById('icon-lock');
         const iconShield = document.getElementById('icon-shield');
         const themeToggleBtn = document.getElementById('theme-toggle');
         const iconSun = document.getElementById('icon-sun');
@@ -227,14 +229,7 @@
             updateCalculation();
         });
 
-        exchangeInput.addEventListener('input', (e) => {
-            exchangeRate = parseFloat(e.target.value) || 0;
-            manualRateEdit = true;
-            isFloorApplied = false;
-            rateSourceEl.textContent = '(Manual)';
-            applyExchangeBoxStyles();
-            updateCalculation();
-        });
+        // Eliminado el listener de exchangeInput porque ahora es disabled
 
         themeToggleBtn.addEventListener('click', () => {
             isDarkMode = !isDarkMode;
@@ -264,7 +259,7 @@
             finalPriceEl.textContent = roundedPrice.toLocaleString('es-CR');
         }
 
-        // Lógica de API Hacienda
+        // Lógica de API Hacienda ACTUALIZADA (Piso 505)
         async function fetchExchangeRate() {
             rateSourceEl.textContent = '(Conectando...)';
             try {
@@ -275,10 +270,11 @@
                     let officialRate = parseFloat(data.venta.valor);
                     let bankRate = Math.ceil(officialRate + 3); // Ajuste Ventanilla
 
-                    if (bankRate < 500) {
-                        exchangeRate = 500;
+                    // NUEVA LÓGICA DE PISO: 505 Colones
+                    if (bankRate < 505) {
+                        exchangeRate = 505;
                         isFloorApplied = true;
-                        rateSourceEl.textContent = '(Oficial - Piso Min)';
+                        rateSourceEl.textContent = '(Piso de Seguridad)';
                     } else {
                         exchangeRate = bankRate;
                         isFloorApplied = false;
@@ -293,15 +289,15 @@
                     const dataBackup = await responseBackup.json();
                     let backupRate = Math.ceil(dataBackup.rates.CRC);
                     
-                    if(backupRate < 500) {
-                        exchangeRate = 500;
+                    if(backupRate < 505) {
+                        exchangeRate = 505;
                         isFloorApplied = true;
                     } else {
                         exchangeRate = backupRate;
                     }
                     rateSourceEl.textContent = '(Global Backup)';
                 } catch (e) {
-                    exchangeRate = 500;
+                    exchangeRate = 505;
                     rateSourceEl.textContent = '(Offline)';
                 }
             }
@@ -315,37 +311,41 @@
         function applyExchangeBoxStyles() {
             // Limpiar clases anteriores
             exchangeBox.className = "p-3 rounded-xl flex items-center justify-between border transition-colors duration-300";
-            exchangeInput.className = "w-20 border rounded-md px-2 py-1 text-right font-bold text-lg focus:outline-none focus:ring-2 bg-transparent";
             
             if (isDarkMode) {
                 // Modo Oscuro
                 if (isFloorApplied) {
                     exchangeBox.classList.add('bg-orange-900/30', 'border-orange-700');
-                    exchangeInput.classList.add('border-orange-500', 'text-orange-500');
                     floorWarningEl.classList.remove('hidden');
                     iconShield.classList.remove('hidden');
-                    iconBank.classList.add('hidden');
+                    iconLock.classList.add('hidden');
+                    // Input style update
+                    exchangeInput.classList.remove('text-gray-300');
+                    exchangeInput.classList.add('text-orange-500');
                 } else {
                     exchangeBox.classList.add('bg-emerald-900/30', 'border-emerald-800');
-                    exchangeInput.classList.add('border-gray-700', 'text-white');
                     floorWarningEl.classList.add('hidden');
                     iconShield.classList.add('hidden');
-                    iconBank.classList.remove('hidden');
+                    iconLock.classList.remove('hidden');
+                    exchangeInput.classList.remove('text-orange-500');
+                    exchangeInput.classList.add('text-gray-300');
                 }
             } else {
                 // Modo Claro
                 if (isFloorApplied) {
                     exchangeBox.classList.add('bg-orange-50', 'border-orange-200');
-                    exchangeInput.classList.add('border-orange-500', 'text-orange-600');
                     floorWarningEl.classList.remove('hidden');
                     iconShield.classList.remove('hidden');
-                    iconBank.classList.add('hidden');
+                    iconLock.classList.add('hidden');
+                    exchangeInput.classList.remove('text-gray-600');
+                    exchangeInput.classList.add('text-orange-600');
                 } else {
                     exchangeBox.classList.add('bg-emerald-50', 'border-emerald-200');
-                    exchangeInput.classList.add('border-emerald-200', 'text-emerald-900');
                     floorWarningEl.classList.add('hidden');
                     iconShield.classList.add('hidden');
-                    iconBank.classList.remove('hidden');
+                    iconLock.classList.remove('hidden');
+                    exchangeInput.classList.remove('text-orange-600');
+                    exchangeInput.classList.add('text-gray-600');
                 }
             }
         }
