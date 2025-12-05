@@ -93,6 +93,12 @@
                         />
                     </form>
                 </div>
+                <!-- NUEVO: Costo en Colones -->
+                <div class="text-right px-2">
+                    <p class="text-xs font-bold text-gray-500 dark:text-gray-400">
+                        Costo real: <span class="text-gray-700 dark:text-gray-200">₡<span id="cost-in-colones">0</span></span>
+                    </p>
+                </div>
             </div>
 
             <!-- Sección 2: Margen de Ganancia -->
@@ -211,6 +217,7 @@
 
         // Elementos del DOM
         const usdInput = document.getElementById('usd-price');
+        const costInColonesEl = document.getElementById('cost-in-colones'); // NUEVO ELEMENTO
         const marginSlider = document.getElementById('margin-slider');
         const marginDisplay = document.getElementById('margin-display');
         const exchangeInput = document.getElementById('exchange-rate');
@@ -275,6 +282,7 @@
             if (!usdPrice) {
                 finalPriceEl.textContent = '0';
                 profitAmountEl.textContent = '0';
+                costInColonesEl.textContent = '0';
                 return;
             }
             
@@ -292,6 +300,7 @@
 
             finalPriceEl.textContent = roundedFinalPrice.toLocaleString('es-CR');
             profitAmountEl.textContent = profit.toLocaleString('es-CR');
+            costInColonesEl.textContent = Math.ceil(costInColones).toLocaleString('es-CR'); // ACTUALIZAR COSTO
         }
 
         // Lógica de API Hacienda ACTUALIZADA (Piso 505)
