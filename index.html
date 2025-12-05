@@ -82,13 +82,16 @@
                 </label>
                 <div class="relative">
                     <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold text-xl">$</span>
-                    <input 
-                        type="number" 
-                        id="usd-price"
-                        inputmode="decimal"
-                        placeholder="0.00"
-                        class="w-full pl-10 pr-4 py-4 rounded-2xl text-3xl font-black focus:outline-none focus:ring-4 focus:ring-lime-500/20 transition-all shadow-inner border-2 bg-gray-50 border-lime-200 text-gray-800 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-                    />
+                    <!-- Agregamos un form simple para mejorar la semántica en móviles -->
+                    <form onsubmit="return false;" class="w-full">
+                        <input 
+                            type="number" 
+                            id="usd-price"
+                            inputmode="decimal"
+                            placeholder="0.00"
+                            class="w-full pl-10 pr-4 py-4 rounded-2xl text-3xl font-black focus:outline-none focus:ring-4 focus:ring-lime-500/20 transition-all shadow-inner border-2 bg-gray-50 border-lime-200 text-gray-800 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                        />
+                    </form>
                 </div>
             </div>
 
@@ -115,22 +118,25 @@
 
             <!-- Sección 3: Tipo de Cambio (BLOQUEADO/AUTOMÁTICO) -->
             <div id="exchange-box" class="p-3 rounded-xl flex items-center justify-between border transition-colors duration-300">
-                <div class="flex flex-col">
-                    <div class="flex items-center gap-2 font-bold text-sm text-gray-700 dark:text-gray-300">
-                        <span id="rate-icon-container">
+                <!-- Columna Izquierda (Texto): Flexible para que no empuje el precio -->
+                <div class="flex flex-col flex-1 min-w-0 mr-2">
+                    <div class="flex flex-wrap items-center gap-x-2 font-bold text-sm text-gray-700 dark:text-gray-300 leading-tight">
+                        <span id="rate-icon-container" class="shrink-0">
                             <!-- Icono Candado para indicar que está fijo/seguro -->
                             <i data-lucide="lock" width="16" id="icon-lock" class="text-gray-400 dark:text-gray-500"></i>
                             <i data-lucide="shield-check" width="16" id="icon-shield" class="hidden text-orange-500"></i>
                         </span>
-                        <span id="rate-label">T.C. Automático</span> <span id="rate-source" class="text-xs opacity-70">(Cargando...)</span>
+                        <span class="whitespace-nowrap">T.C. Auto</span> 
+                        <span id="rate-source" class="text-xs opacity-70 break-words">(Cargando...)</span>
                     </div>
                     <span id="floor-warning" class="text-[10px] font-bold text-orange-500 flex items-center gap-1 mt-1 hidden">
-                        <i data-lucide="shield-check" width="10"></i>
+                        <i data-lucide="shield-check" width="10" class="shrink-0"></i>
                         Piso mín. 505 aplicado
                     </span>
                 </div>
                 
-                <div class="flex items-center gap-1 opacity-80" title="Precio calculado automáticamente">
+                <!-- Columna Derecha (Precio): No se encoge -->
+                <div class="flex items-center gap-1 opacity-80 shrink-0" title="Precio calculado automáticamente">
                     <span class="font-bold text-gray-500 dark:text-gray-400">₡</span>
                     <!-- Input deshabilitado (Disabled) -->
                     <input 
@@ -138,7 +144,7 @@
                         id="exchange-rate"
                         value="505"
                         disabled
-                        class="w-20 border-none bg-transparent rounded-md px-2 py-1 text-right font-bold text-lg focus:outline-none cursor-not-allowed text-gray-600 dark:text-gray-300"
+                        class="w-16 border-none bg-transparent rounded-md px-0 py-1 text-right font-bold text-lg focus:outline-none cursor-not-allowed text-gray-600 dark:text-gray-300"
                     />
                 </div>
             </div>
@@ -221,6 +227,14 @@
         usdInput.addEventListener('input', (e) => {
             usdPrice = e.target.value;
             updateCalculation();
+        });
+
+        // NUEVO: Cerrar teclado al presionar Enter/Ir
+        usdInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                usdInput.blur();
+            }
         });
 
         marginSlider.addEventListener('input', (e) => {
